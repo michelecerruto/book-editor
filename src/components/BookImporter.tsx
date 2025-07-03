@@ -59,7 +59,7 @@ export function BookImporter({ onImport, onClose }: BookImporterProps) {
   };
 
   const createBookFromText = (text: string, filename: string): Book => {
-    const book = createEmptyBook();
+    const book = createEmptyBook(); // This now includes default settings
     
     // Extract title from filename (remove extension)
     const title = filename.replace(/\.[^/.]+$/, "");

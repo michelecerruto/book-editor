@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
-import { Book, Page } from "@/types/book";
+import { Book, Page, BookSettings } from "@/types/book";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -11,6 +11,28 @@ export function generateId(): string {
 
 export function createEmptyBook(): Book {
   const now = new Date();
+  
+  // Default book settings
+  const defaultSettings: BookSettings = {
+    pageNumbering: {
+      enabled: false,
+      position: 'bottom-center',
+      format: 'number',
+      prefix: '',
+      suffix: '',
+      fontSize: 12,
+      color: '#666666',
+      fontWeight: 'normal'
+    },
+    margins: {
+      top: 40,
+      bottom: 40,
+      left: 40,
+      right: 40,
+      unit: 'px'
+    }
+  };
+  
   return {
     id: generateId(),
     title: "Untitled Book",
@@ -23,7 +45,8 @@ export function createEmptyBook(): Book {
       totalPages: 1,
       totalWords: 0,
       language: "en",
-    }
+    },
+    settings: defaultSettings
   };
 }
 

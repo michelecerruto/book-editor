@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 import { BuilderProps, ElementLibraryItem } from '@/types/builder';
+import { BookSettings } from '@/types/book';
 import { useBuilderSelection } from '@/hooks/useBuilderSelection';
 import { useBuilderDragDrop } from '@/hooks/useBuilderDragDrop';
 import { useBuilderContent } from '@/hooks/useBuilderContent';
@@ -135,6 +136,30 @@ export function Builder({
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const dragHandlerRef = useRef<((e: DragEvent, elementId: string) => void) | null>(null);
 
+  // Default book settings if not present
+  const defaultBookSettings: BookSettings = {
+    pageNumbering: {
+      enabled: false,
+      position: 'bottom-center',
+      format: 'number',
+      prefix: '',
+      suffix: '',
+      fontSize: 12,
+      color: '#666666',
+      fontWeight: 'normal'
+    },
+    margins: {
+      top: 40,
+      bottom: 40,
+      left: 40,
+      right: 40,
+      unit: 'px'
+    }
+  };
+
+  // Get current book settings or use defaults
+  const currentBookSettings = book.settings || defaultBookSettings;
+
   // Custom hooks for state management
   const { selection, selectElement, clearSelection } = useBuilderSelection({
     contentRef
@@ -217,6 +242,17 @@ export function Builder({
     onSwitchToEditor?.();
   };
 
+  /**
+   * Handles book settings updates
+   */
+  const handleBookSettingsUpdate = (newSettings: BookSettings) => {
+    const updatedBook = {
+      ...book,
+      settings: newSettings
+    };
+    onSave(updatedBook);
+  };
+
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Toolbar */}
@@ -236,6 +272,7 @@ export function Builder({
           isPreviewMode={isPreviewMode}
           elementLibrary={ELEMENT_LIBRARY}
           selectedElement={selection.selectedElement}
+          bookSettings={currentBookSettings}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onContentUpdate={(content: string) => {
@@ -245,6 +282,7 @@ export function Builder({
             updateElementStyle(property, value, selection.selectedElementId || undefined);
           }}
           onElementDelete={handleElementDelete}
+          onBookSettingsUpdate={handleBookSettingsUpdate}
         />
 
         {/* Canvas */}
@@ -253,6 +291,9 @@ export function Builder({
           isPreviewMode={isPreviewMode}
           dragState={dragState}
           elementLibrary={ELEMENT_LIBRARY}
+          bookSettings={currentBookSettings}
+          currentPageIndex={currentPageIndex}
+          totalPages={book.pages.length}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={handleCanvasClick}

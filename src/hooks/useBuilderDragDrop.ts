@@ -167,7 +167,7 @@ export function useBuilderDragDrop({
     }, 50);
 
     return true;
-  }, [elementLibrary, contentRef, onContentUpdate, onElementSelect, onRefreshListeners, saveCleanContent]);
+  }, [elementLibrary, contentRef, onElementSelect, onRefreshListeners, saveCleanContent]);
 
   /**
    * Finds the element to insert before based on drop position

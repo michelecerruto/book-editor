@@ -6,8 +6,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { BuilderElementLibrary } from './BuilderElementLibrary';
 import { BuilderPropertiesPanel } from './BuilderPropertiesPanel';
+import { BuilderBookPanel } from './BuilderBookPanel';
 import { ElementLibraryItem } from '@/types/builder';
-import { Layers, Settings, Palette } from 'lucide-react';
+import { BookSettings } from '@/types/book';
+import { Layers, Settings, Palette, BookOpen } from 'lucide-react';
 
 interface BuilderSidebarProps {
   /** Whether preview mode is active */
@@ -16,6 +18,8 @@ interface BuilderSidebarProps {
   elementLibrary: ElementLibraryItem[];
   /** Currently selected element */
   selectedElement: HTMLElement | null;
+  /** Current book settings */
+  bookSettings: BookSettings;
   /** Callback when drag starts from library */
   onDragStart: (e: React.DragEvent, elementType: string) => void;
   /** Callback when drag ends */
@@ -26,6 +30,8 @@ interface BuilderSidebarProps {
   onStyleUpdate: (property: string, value: string) => void;
   /** Callback when element is deleted */
   onElementDelete: () => void;
+  /** Callback when book settings are updated */
+  onBookSettingsUpdate: (settings: BookSettings) => void;
 }
 
 /**
@@ -37,13 +43,15 @@ export function BuilderSidebar({
   isPreviewMode,
   elementLibrary,
   selectedElement,
+  bookSettings,
   onDragStart,
   onDragEnd,
   onContentUpdate,
   onStyleUpdate,
-  onElementDelete
+  onElementDelete,
+  onBookSettingsUpdate
 }: BuilderSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'elements' | 'properties' | 'design'>('elements');
+  const [activeTab, setActiveTab] = useState<'elements' | 'properties' | 'design' | 'book'>('elements');
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -104,7 +112,8 @@ export function BuilderSidebar({
   const tabs = [
     { id: 'elements' as const, label: 'Elements', icon: Layers },
     { id: 'properties' as const, label: 'Properties', icon: Settings },
-    { id: 'design' as const, label: 'Design', icon: Palette }
+    { id: 'design' as const, label: 'Design', icon: Palette },
+    { id: 'book' as const, label: 'Book', icon: BookOpen }
   ];
 
   return (
@@ -168,6 +177,13 @@ export function BuilderSidebar({
             onContentUpdate={onContentUpdate}
             onStyleUpdate={onStyleUpdate}
             onDelete={onElementDelete}
+          />
+        )}
+
+        {activeTab === 'book' && (
+          <BuilderBookPanel
+            bookSettings={bookSettings}
+            onSettingsUpdate={onBookSettingsUpdate}
           />
         )}
 

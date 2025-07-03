@@ -5,6 +5,7 @@ export interface Book {
   content: string;
   pages: Page[];
   metadata: BookMetadata;
+  settings: BookSettings;
 }
 
 export interface Page {
@@ -21,6 +22,30 @@ export interface BookMetadata {
   totalWords: number;
   language: string;
   genre?: string;
+}
+
+export interface BookSettings {
+  pageNumbering: PageNumberingSettings;
+  margins: BookMarginsSettings;
+}
+
+export interface PageNumberingSettings {
+  enabled: boolean;
+  position: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  format: 'number' | 'roman' | 'text';
+  prefix: string;
+  suffix: string;
+  fontSize: number;
+  color: string;
+  fontWeight: 'normal' | 'bold';
+}
+
+export interface BookMarginsSettings {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  unit: 'px' | 'mm' | 'in';
 }
 
 export interface BookEditorState {
