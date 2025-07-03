@@ -6,8 +6,11 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { BuilderElementLibrary } from './BuilderElementLibrary';
 import { BuilderPropertiesPanel } from './BuilderPropertiesPanel';
+import { BuilderBookSettingsPanel } from './BuilderBookSettingsPanel';
+import { BuilderDesignSettingsPanel } from './BuilderDesignSettingsPanel';
 import { ElementLibraryItem } from '@/types/builder';
-import { Layers, Settings, Palette } from 'lucide-react';
+import { BookSettings, DesignSettings } from '@/types/book';
+import { Layers, Settings, Palette, BookOpen } from 'lucide-react';
 
 interface BuilderSidebarProps {
   /** Whether preview mode is active */
@@ -16,6 +19,10 @@ interface BuilderSidebarProps {
   elementLibrary: ElementLibraryItem[];
   /** Currently selected element */
   selectedElement: HTMLElement | null;
+  /** Current book settings */
+  bookSettings: BookSettings;
+  /** Current design settings */
+  designSettings: DesignSettings;
   /** Callback when drag starts from library */
   onDragStart: (e: React.DragEvent, elementType: string) => void;
   /** Callback when drag ends */
@@ -26,6 +33,10 @@ interface BuilderSidebarProps {
   onStyleUpdate: (property: string, value: string) => void;
   /** Callback when element is deleted */
   onElementDelete: () => void;
+  /** Callback when book settings are updated */
+  onBookSettingsUpdate: (settings: BookSettings) => void;
+  /** Callback when design settings are updated */
+  onDesignSettingsUpdate: (settings: DesignSettings) => void;
 }
 
 /**
@@ -37,13 +48,17 @@ export function BuilderSidebar({
   isPreviewMode,
   elementLibrary,
   selectedElement,
+  bookSettings,
+  designSettings,
   onDragStart,
   onDragEnd,
   onContentUpdate,
   onStyleUpdate,
-  onElementDelete
+  onElementDelete,
+  onBookSettingsUpdate,
+  onDesignSettingsUpdate
 }: BuilderSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'elements' | 'properties' | 'design'>('elements');
+  const [activeTab, setActiveTab] = useState<'elements' | 'properties' | 'design' | 'book'>('elements');
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -104,7 +119,8 @@ export function BuilderSidebar({
   const tabs = [
     { id: 'elements' as const, label: 'Elements', icon: Layers },
     { id: 'properties' as const, label: 'Properties', icon: Settings },
-    { id: 'design' as const, label: 'Design', icon: Palette }
+    { id: 'design' as const, label: 'Design', icon: Palette },
+    { id: 'book' as const, label: 'Book', icon: BookOpen }
   ];
 
   return (
@@ -172,174 +188,17 @@ export function BuilderSidebar({
         )}
 
         {activeTab === 'design' && (
-          <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="p-4">
-              <div className="space-y-6">
-                {/* Typography Section */}
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-3">Typography</h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Primary Font Family
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="system">System Default</option>
-                        <option value="serif">Serif (Times, Georgia)</option>
-                        <option value="sans">Sans Serif (Arial, Helvetica)</option>
-                        <option value="crimson">Crimson Text (Book Serif)</option>
-                        <option value="libre">Libre Baskerville</option>
-                        <option value="playfair">Playfair Display</option>
-                        <option value="inter">Inter (Modern Sans)</option>
-                        <option value="lora">Lora (Reading Font)</option>
-                        <option value="merriweather">Merriweather</option>
-                      </select>
-                    </div>
+          <BuilderDesignSettingsPanel
+            designSettings={designSettings}
+            onSettingsUpdate={onDesignSettingsUpdate}
+          />
+        )}
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Base Font Size
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="14px">Small (14px)</option>
-                        <option value="16px">Medium (16px)</option>
-                        <option value="18px">Large (18px)</option>
-                        <option value="20px">Extra Large (20px)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Line Height
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="1.4">Tight (1.4)</option>
-                        <option value="1.6">Normal (1.6)</option>
-                        <option value="1.7">Relaxed (1.7)</option>
-                        <option value="1.8">Loose (1.8)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Paragraph Spacing
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="12px">Tight (12px)</option>
-                        <option value="16px">Normal (16px)</option>
-                        <option value="20px">Relaxed (20px)</option>
-                        <option value="24px">Wide (24px)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Layout Section */}
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-3">Layout</h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Page Width
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="full">Full Width</option>
-                        <option value="1200px">Standard (1200px)</option>
-                        <option value="800px">Book Width (800px)</option>
-                        <option value="600px">Narrow (600px)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Page Margins
-                      </label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option value="32px">Narrow (32px)</option>
-                        <option value="48px">Normal (48px)</option>
-                        <option value="64px">Wide (64px)</option>
-                        <option value="80px">Extra Wide (80px)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Color Scheme */}
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-3">Colors</h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Background
-                      </label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {[
-                          { color: '#ffffff', name: 'White' },
-                          { color: '#fefefe', name: 'Off White' },
-                          { color: '#f9fafb', name: 'Light Gray' },
-                          { color: '#f3f4f6', name: 'Gray' }
-                        ].map((bg) => (
-                          <button
-                            key={bg.color}
-                            className="w-12 h-8 rounded border-2 border-gray-300 hover:border-orange-400 transition-colors"
-                            style={{ backgroundColor: bg.color }}
-                            title={bg.name}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Text Color
-                      </label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {[
-                          { color: '#111827', name: 'Black' },
-                          { color: '#1f2937', name: 'Dark Gray' },
-                          { color: '#374151', name: 'Medium Gray' },
-                          { color: '#4b5563', name: 'Light Gray' }
-                        ].map((text) => (
-                          <button
-                            key={text.color}
-                            className="w-12 h-8 rounded border-2 border-gray-300 hover:border-orange-400 transition-colors"
-                            style={{ backgroundColor: text.color }}
-                            title={text.name}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Book Styles */}
-                <div>
-                  <h4 className="font-medium text-gray-800 mb-3">Book Styles</h4>
-                  
-                  <div className="space-y-2">
-                    {[
-                      'Academic',
-                      'Fiction Novel',
-                      'Technical Manual',
-                      'Poetry Collection',
-                      'Children\'s Book',
-                      'Magazine Layout'
-                    ].map((style) => (
-                      <button
-                        key={style}
-                        className="w-full px-3 py-2 text-left text-sm border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
-                      >
-                        {style}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {activeTab === 'book' && (
+          <BuilderBookSettingsPanel
+            bookSettings={bookSettings}
+            onSettingsUpdate={onBookSettingsUpdate}
+          />
         )}
       </div>
     </div>

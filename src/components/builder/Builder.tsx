@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 import { BuilderProps, ElementLibraryItem } from '@/types/builder';
+import { BookSettings, DesignSettings } from '@/types/book';
 import { useBuilderSelection } from '@/hooks/useBuilderSelection';
 import { useBuilderDragDrop } from '@/hooks/useBuilderDragDrop';
 import { useBuilderContent } from '@/hooks/useBuilderContent';
@@ -135,6 +136,51 @@ export function Builder({
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const dragHandlerRef = useRef<((e: DragEvent, elementId: string) => void) | null>(null);
 
+  // Default book settings if none exist
+  const defaultBookSettings: BookSettings = {
+    pageNumbers: {
+      enabled: true,
+      position: 'bottom-center',
+      format: 'numeric',
+      fontSize: 12,
+      color: '#6b7280',
+      prefix: '',
+      suffix: ''
+    },
+    margins: {
+      top: 32,
+      bottom: 32,
+      left: 32,
+      right: 32
+    },
+    design: {
+      typography: {
+        fontFamily: 'system',
+        baseFontSize: '16px',
+        lineHeight: '1.6',
+        paragraphSpacing: '16px'
+      },
+      layout: {
+        pageWidth: '800px',
+        pageMargins: '32px'
+      },
+      colors: {
+        backgroundColor: '#ffffff',
+        textColor: '#374151'
+      },
+      bookStyle: 'Academic'
+    }
+  };
+
+  const [bookSettings, setBookSettings] = useState<BookSettings>(
+    book.settings || defaultBookSettings
+  );
+
+  // Extract design settings from book settings
+  const [designSettings, setDesignSettings] = useState<DesignSettings>(
+    book.settings?.design || defaultBookSettings.design
+  );
+
   // Custom hooks for state management
   const { selection, selectElement, clearSelection } = useBuilderSelection({
     contentRef
@@ -217,6 +263,38 @@ export function Builder({
     onSwitchToEditor?.();
   };
 
+  /**
+   * Handles book settings updates
+   */
+  const handleBookSettingsUpdate = (newSettings: BookSettings) => {
+    setBookSettings(newSettings);
+    // Update the book object with new settings and save
+    const updatedBook = {
+      ...book,
+      settings: newSettings
+    };
+    onSave(updatedBook);
+  };
+
+  /**
+   * Handles design settings updates
+   */
+  const handleDesignSettingsUpdate = (newDesignSettings: DesignSettings) => {
+    setDesignSettings(newDesignSettings);
+    // Update book settings with new design settings
+    const updatedBookSettings = {
+      ...bookSettings,
+      design: newDesignSettings
+    };
+    setBookSettings(updatedBookSettings);
+    // Update the book object with new settings and save
+    const updatedBook = {
+      ...book,
+      settings: updatedBookSettings
+    };
+    onSave(updatedBook);
+  };
+
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Toolbar */}
@@ -236,6 +314,8 @@ export function Builder({
           isPreviewMode={isPreviewMode}
           elementLibrary={ELEMENT_LIBRARY}
           selectedElement={selection.selectedElement}
+          bookSettings={bookSettings}
+          designSettings={designSettings}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onContentUpdate={(content: string) => {
@@ -245,6 +325,8 @@ export function Builder({
             updateElementStyle(property, value, selection.selectedElementId || undefined);
           }}
           onElementDelete={handleElementDelete}
+          onBookSettingsUpdate={handleBookSettingsUpdate}
+          onDesignSettingsUpdate={handleDesignSettingsUpdate}
         />
 
         {/* Canvas */}
@@ -253,6 +335,9 @@ export function Builder({
           isPreviewMode={isPreviewMode}
           dragState={dragState}
           elementLibrary={ELEMENT_LIBRARY}
+          bookSettings={bookSettings}
+          designSettings={designSettings}
+          currentPageNumber={currentPageIndex + 1}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={handleCanvasClick}

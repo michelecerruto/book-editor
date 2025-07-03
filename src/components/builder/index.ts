@@ -8,4 +8,6 @@ export { BuilderToolbar } from './BuilderToolbar';
 export { BuilderSidebar } from './BuilderSidebar';
 export { BuilderCanvas } from './BuilderCanvas';
 export { BuilderElementLibrary } from './BuilderElementLibrary';
-export { BuilderPropertiesPanel } from './BuilderPropertiesPanel'; 
+export { BuilderPropertiesPanel } from './BuilderPropertiesPanel';
+export { BuilderBookSettingsPanel } from './BuilderBookSettingsPanel';
+export { BuilderDesignSettingsPanel } from './BuilderDesignSettingsPanel'; 
