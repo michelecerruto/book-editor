@@ -105,7 +105,13 @@ export function useBuilderDragDrop({
    * Handles drag start from existing elements (for reordering)
    */
   const handleExistingElementDragStart = useCallback((e: DragEvent, elementId: string) => {
-    e.dataTransfer?.setData('text/plain', `existing:${elementId}`);
+    if (!e.dataTransfer || !elementId) {
+      console.warn('Invalid drag start:', { hasDataTransfer: !!e.dataTransfer, elementId });
+      return;
+    }
+
+    e.dataTransfer.setData('text/plain', `existing:${elementId}`);
+    e.dataTransfer.effectAllowed = 'move';
     
     setDragState(prev => ({
       ...prev,
@@ -202,14 +208,21 @@ export function useBuilderDragDrop({
    * Handles reordering of existing elements with proper positioning
    */
   const reorderElement = useCallback((elementId: string, insertBefore?: HTMLElement | null): boolean => {
-    if (!contentRef.current) return false;
+    if (!contentRef.current) {
+      console.warn('No content ref available for reordering');
+      return false;
+    }
 
     const element = contentRef.current.querySelector(`[data-element-id="${elementId}"]`) as HTMLElement;
     
-    if (!element) return false;
+    if (!element) {
+      console.warn('Element not found for reordering:', elementId);
+      return false;
+    }
 
     // Don't move if it's the same position
     if (insertBefore === element.nextElementSibling) {
+      console.log('Element already in correct position');
       return false;
     }
 
@@ -232,17 +245,68 @@ export function useBuilderDragDrop({
     // Apply builder styling to ensure it remains interactive
     applyBuilderStyling(element);
 
+    // Immediately save content and refresh listeners
+    saveCleanContent();
+    
+    // Use a single timeout for all post-reorder actions
+    setTimeout(() => {
+      onRefreshListeners();
+      onElementSelect(elementId);
+    }, 100);
+
+    return true;
+  }, [contentRef, onRefreshListeners, onElementSelect, saveCleanContent]);
+
+  /**
+   * Creates a new image element and adds it to the canvas
+   */
+  const createImageElement = useCallback((imageUrl: string): boolean => {
+    if (!contentRef.current) return false;
+
+    const uniqueId = generateElementId();
+
+    // Create image element with proper styling
+    const figure = document.createElement('figure');
+    figure.setAttribute('data-element-id', uniqueId);
+    figure.style.cssText = 'margin: 24px 0; text-align: center;';
+
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = 'Uploaded image';
+    img.style.cssText = 'max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
+
+    const figcaption = document.createElement('figcaption');
+    figcaption.style.cssText = 'margin-top: 8px; font-size: 14px; color: #64748b; font-style: italic;';
+    figcaption.textContent = 'Image caption goes here';
+
+    figure.appendChild(img);
+    figure.appendChild(figcaption);
+
+    // Apply builder styling to make it selectable
+    applyBuilderStyling(figure);
+
+    // Check if this is the first element
+    const existingElements = contentRef.current.querySelectorAll('[data-element-id]');
+    
+    if (existingElements.length === 0 || contentRef.current.innerHTML.includes('Start Building Your Layout')) {
+      // Replace placeholder content
+      contentRef.current.innerHTML = '';
+    }
+
+    // Add to canvas
+    contentRef.current.appendChild(figure);
+
     // Update content using clean content saving (strips selection styling)
     saveCleanContent();
     
     // Refresh listeners after a short delay to ensure DOM is updated
     setTimeout(() => {
       onRefreshListeners();
-      onElementSelect(elementId);
+      onElementSelect(uniqueId);
     }, 50);
 
     return true;
-  }, [contentRef, onRefreshListeners, onElementSelect, saveCleanContent]);
+  }, [contentRef, onElementSelect, onRefreshListeners, saveCleanContent]);
 
   /**
    * Handles drop events on the canvas
@@ -258,21 +322,43 @@ export function useBuilderDragDrop({
     
     const data = e.dataTransfer.getData('text/plain');
     
-    if (data.startsWith('existing:')) {
+    // More robust checking for existing element reordering
+    if (data && data.startsWith('existing:')) {
       // Handle reordering with position detection
       const elementId = data.replace('existing:', '');
-      const insertBefore = findInsertPosition(e);
-      reorderElement(elementId, insertBefore);
-    } else {
-      // Handle new element from library
-      createNewElement(data);
+      if (elementId) {
+        const insertBefore = findInsertPosition(e);
+        const success = reorderElement(elementId, insertBefore);
+        if (!success) {
+          console.warn('Failed to reorder element:', elementId);
+        }
+      }
+    } else if (data) {
+      // Check if it's an image (JSON format)
+      if (data.startsWith('{') && data.includes('"type"') && data.includes('"image"')) {
+        try {
+          const parsedData = JSON.parse(data);
+          if (parsedData.type === 'image' && parsedData.imageUrl) {
+            createImageElement(parsedData.imageUrl);
+          } else {
+            // Fallback to treating as element type
+            createNewElement(data);
+          }
+        } catch {
+          // If JSON parsing fails, treat as element type
+          createNewElement(data);
+        }
+      } else {
+        // Handle new element from library (simple string)
+        createNewElement(data);
+      }
     }
 
     setDragState({
       draggedElementType: null,
       draggedElementId: null
     });
-  }, [createNewElement, reorderElement, findInsertPosition, contentRef]);
+  }, [createNewElement, createImageElement, reorderElement, findInsertPosition, contentRef]);
 
   /**
    * Handles drag over events

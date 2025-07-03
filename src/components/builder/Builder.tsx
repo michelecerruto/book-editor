@@ -10,7 +10,6 @@ import {
   Type, 
   Heading1, 
   Heading2,
-  Image,
   Quote,
   List,
   Table2,
@@ -68,12 +67,6 @@ const ELEMENT_LIBRARY: ElementLibraryItem[] = [
   },
   
   // Content Section
-  {
-    id: 'image',
-    title: 'Image',
-    icon: Image,
-    template: '<figure style="margin: 24px 0; text-align: center;"><img src="https://via.placeholder.com/600x400/e2e8f0/64748b?text=Book+Image" alt="Book illustration" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" /><figcaption style="margin-top: 8px; font-size: 14px; color: #64748b; font-style: italic;">Image caption goes here</figcaption></figure>'
-  },
   {
     id: 'table',
     title: 'Table',
@@ -221,7 +214,16 @@ export function Builder({
   // Store drag handler in ref
   dragHandlerRef.current = handleExistingElementDragStart;
 
-
+  /**
+   * Handles image drag start from images panel
+   */
+  const handleImageDragStart = (e: React.DragEvent, imageUrl: string) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      type: 'image',
+      imageUrl: imageUrl
+    }));
+    e.dataTransfer.effectAllowed = 'copy';
+  };
 
   /**
    * Handles canvas click events - only for clearing selection when clicking empty space
@@ -327,6 +329,7 @@ export function Builder({
           onElementDelete={handleElementDelete}
           onBookSettingsUpdate={handleBookSettingsUpdate}
           onDesignSettingsUpdate={handleDesignSettingsUpdate}
+          onImageDragStart={handleImageDragStart}
         />
 
         {/* Canvas */}

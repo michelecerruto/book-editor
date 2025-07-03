@@ -10,4 +10,5 @@ export { BuilderCanvas } from './BuilderCanvas';
 export { BuilderElementLibrary } from './BuilderElementLibrary';
 export { BuilderPropertiesPanel } from './BuilderPropertiesPanel';
 export { BuilderBookSettingsPanel } from './BuilderBookSettingsPanel';
-export { BuilderDesignSettingsPanel } from './BuilderDesignSettingsPanel'; 
+export { BuilderDesignSettingsPanel } from './BuilderDesignSettingsPanel';
+export { BuilderImagesPanel } from './BuilderImagesPanel'; 

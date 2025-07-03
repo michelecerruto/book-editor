@@ -8,9 +8,10 @@ import { BuilderElementLibrary } from './BuilderElementLibrary';
 import { BuilderPropertiesPanel } from './BuilderPropertiesPanel';
 import { BuilderBookSettingsPanel } from './BuilderBookSettingsPanel';
 import { BuilderDesignSettingsPanel } from './BuilderDesignSettingsPanel';
+import { BuilderImagesPanel } from './BuilderImagesPanel';
 import { ElementLibraryItem } from '@/types/builder';
 import { BookSettings, DesignSettings } from '@/types/book';
-import { Layers, Settings, Palette, BookOpen } from 'lucide-react';
+import { Layers, Settings, Palette, BookOpen, ImageIcon } from 'lucide-react';
 
 interface BuilderSidebarProps {
   /** Whether preview mode is active */
@@ -37,6 +38,8 @@ interface BuilderSidebarProps {
   onBookSettingsUpdate: (settings: BookSettings) => void;
   /** Callback when design settings are updated */
   onDesignSettingsUpdate: (settings: DesignSettings) => void;
+  /** Callback when image drag starts from images panel */
+  onImageDragStart: (e: React.DragEvent, imageUrl: string) => void;
 }
 
 /**
@@ -56,9 +59,10 @@ export function BuilderSidebar({
   onStyleUpdate,
   onElementDelete,
   onBookSettingsUpdate,
-  onDesignSettingsUpdate
+  onDesignSettingsUpdate,
+  onImageDragStart
 }: BuilderSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'elements' | 'properties' | 'design' | 'book'>('elements');
+  const [activeTab, setActiveTab] = useState<'elements' | 'images' | 'properties' | 'design' | 'book'>('elements');
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -118,6 +122,7 @@ export function BuilderSidebar({
 
   const tabs = [
     { id: 'elements' as const, label: 'Elements', icon: Layers },
+    { id: 'images' as const, label: 'Images', icon: ImageIcon },
     { id: 'properties' as const, label: 'Properties', icon: Settings },
     { id: 'design' as const, label: 'Design', icon: Palette },
     { id: 'book' as const, label: 'Book', icon: BookOpen }
@@ -173,6 +178,15 @@ export function BuilderSidebar({
             <BuilderElementLibrary
               elements={elementLibrary}
               onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+            />
+          </div>
+        )}
+
+        {activeTab === 'images' && (
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <BuilderImagesPanel
+              onImageDragStart={onImageDragStart}
               onDragEnd={onDragEnd}
             />
           </div>

@@ -33,7 +33,7 @@ export function BuilderElementLibrary({
     },
     {
       title: 'Content',
-      elements: elements.filter(el => ['image', 'table', 'list', 'numbered-list'].includes(el.id))
+      elements: elements.filter(el => ['table', 'list', 'numbered-list'].includes(el.id))
     },
     {
       title: 'Layout',

@@ -60,7 +60,7 @@ export function BuilderPropertiesPanel({
 
   const elementId = selectedElement.getAttribute('data-element-id');
   const isImported = elementId?.startsWith('imported-');
-  const isImage = selectedElement.tagName === 'IMG';
+  const isImage = selectedElement.tagName === 'IMG' || selectedElement.querySelector('img') !== null;
   
   // Get computed styles to read actual rendered values
   const computedStyle = window.getComputedStyle(selectedElement);
@@ -137,6 +137,11 @@ export function BuilderPropertiesPanel({
           {isImported && (
             <span className="text-xs text-blue-600 ml-2 bg-blue-50 px-2 py-1 rounded">
               Imported
+            </span>
+          )}
+          {isImage && (
+            <span className="text-xs text-green-600 ml-2 bg-green-50 px-2 py-1 rounded">
+              Image
             </span>
           )}
         </h3>
@@ -227,10 +232,52 @@ export function BuilderPropertiesPanel({
               </label>
               <input
                 type="url"
-                value={selectedElement.getAttribute('src') || ''}
-                onChange={(e) => onContentUpdate(e.target.value)}
+                value={(() => {
+                  // Get src from img element, whether it's the selected element or inside a figure
+                  const imgElement = selectedElement.tagName === 'IMG' 
+                    ? selectedElement 
+                    : selectedElement.querySelector('img');
+                  return imgElement?.getAttribute('src') || '';
+                })()}
+                onChange={(e) => {
+                  // Update the src attribute of the img element
+                  const imgElement = selectedElement.tagName === 'IMG' 
+                    ? selectedElement 
+                    : selectedElement.querySelector('img');
+                  if (imgElement) {
+                    imgElement.setAttribute('src', e.target.value);
+                    // Trigger a content update to save changes
+                    onContentUpdate(e.target.value);
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900"
                 placeholder="https://example.com/image.jpg"
+              />
+            </div>
+          )}
+
+          {/* Image Caption Editor for Figure Elements */}
+          {isImage && selectedElement.querySelector('figcaption') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Image Caption
+              </label>
+              <input
+                type="text"
+                value={(() => {
+                  const figcaption = selectedElement.querySelector('figcaption');
+                  return figcaption?.textContent || '';
+                })()}
+                onChange={(e) => {
+                  const figcaption = selectedElement.querySelector('figcaption');
+                  if (figcaption) {
+                    figcaption.textContent = e.target.value;
+                    // Trigger a content update to save changes
+                    onContentUpdate(e.target.value);
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900"
+                placeholder="Enter image caption..."
               />
             </div>
           )}
