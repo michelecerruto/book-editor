@@ -248,11 +248,13 @@ export function useBuilderDragDrop({
     // Immediately save content and refresh listeners
     saveCleanContent();
     
-    // Use a single timeout for all post-reorder actions
+    // Immediately refresh listeners and then select the element
+    onRefreshListeners();
+    
+    // Use a small delay for selection to ensure listeners are attached
     setTimeout(() => {
-      onRefreshListeners();
       onElementSelect(elementId);
-    }, 100);
+    }, 50);
 
     return true;
   }, [contentRef, onRefreshListeners, onElementSelect, saveCleanContent]);

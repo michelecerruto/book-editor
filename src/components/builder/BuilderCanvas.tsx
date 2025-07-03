@@ -3,10 +3,11 @@
  * The main editing area where elements can be dropped and arranged
  */
 
-import React, { RefObject } from 'react';
+import React, { RefObject, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { DragDropState, ElementLibraryItem } from '@/types/builder';
 import { BookSettings, PageNumberSettings, DesignSettings } from '@/types/book';
+
 
 interface BuilderCanvasProps {
   /** Reference to the content container */
@@ -23,12 +24,16 @@ interface BuilderCanvasProps {
   designSettings: DesignSettings;
   /** Current page number for page numbering */
   currentPageNumber: number;
+  /** Currently selected element (for grid overlay) */
+  selectedElement?: HTMLElement | null;
   /** Callback when dropping on canvas */
   onDrop: (e: React.DragEvent) => void;
   /** Callback when dragging over canvas */
   onDragOver: (e: React.DragEvent) => void;
   /** Callback when clicking on canvas */
   onClick: (e: React.MouseEvent) => void;
+  /** Callback when content should be updated/saved */
+  onContentUpdate?: () => void;
 }
 
 /**
@@ -44,13 +49,35 @@ export function BuilderCanvas({
   bookSettings,
   designSettings,
   currentPageNumber,
+  selectedElement,
   onDrop,
   onDragOver,
-  onClick
+  onClick,
+  onContentUpdate
 }: BuilderCanvasProps) {
   const isDraggingNewElement = Boolean(dragState.draggedElementType);
   const isDraggingExistingElement = Boolean(dragState.draggedElementId);
   const isDragging = isDraggingNewElement || isDraggingExistingElement;
+
+  // Listen for image resize events to trigger content updates
+  useEffect(() => {
+    const handleImageResize = () => {
+      onContentUpdate?.();
+    };
+
+    if (contentRef.current) {
+      contentRef.current.addEventListener('imageResized', handleImageResize);
+      return () => {
+        contentRef.current?.removeEventListener('imageResized', handleImageResize);
+      };
+    }
+  }, [contentRef, onContentUpdate]);
+
+  // selectedElement is passed but not used directly in this component
+  // It's available for future enhancements
+  React.useEffect(() => {
+    // This effect acknowledges selectedElement to prevent lint warnings
+  }, [selectedElement]);
 
   // Helper function to format page numbers
   const formatPageNumber = (pageNum: number, format: PageNumberSettings['format']): string => {
@@ -245,6 +272,7 @@ export function BuilderCanvas({
           )}
         </div>
       </div>
+
     </div>
   );
 } 

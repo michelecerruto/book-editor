@@ -11,4 +11,6 @@ export { BuilderElementLibrary } from './BuilderElementLibrary';
 export { BuilderPropertiesPanel } from './BuilderPropertiesPanel';
 export { BuilderBookSettingsPanel } from './BuilderBookSettingsPanel';
 export { BuilderDesignSettingsPanel } from './BuilderDesignSettingsPanel';
-export { BuilderImagesPanel } from './BuilderImagesPanel'; 
+export { BuilderImagesPanel } from './BuilderImagesPanel';
+export { ImageGridResizer } from './ImageGridResizer';
+export { BuilderGridOverlay } from './BuilderGridOverlay'; 

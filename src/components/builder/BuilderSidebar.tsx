@@ -188,6 +188,8 @@ export function BuilderSidebar({
             <BuilderImagesPanel
               onImageDragStart={onImageDragStart}
               onDragEnd={onDragEnd}
+              bookSettings={bookSettings}
+              onBookSettingsUpdate={onBookSettingsUpdate}
             />
           </div>
         )}

@@ -5,12 +5,17 @@
 
 import React, { useRef, useState } from 'react';
 import { Upload, Wand2, Image, AlertCircle } from 'lucide-react';
+import { BookSettings } from '@/types/book';
 
 interface BuilderImagesPanelProps {
   /** Callback when drag starts from an image */
   onImageDragStart: (e: React.DragEvent, imageUrl: string) => void;
   /** Callback when drag ends */
   onDragEnd: () => void;
+  /** Current book settings */
+  bookSettings: BookSettings;
+  /** Callback when book settings are updated */
+  onBookSettingsUpdate: (settings: BookSettings) => void;
 }
 
 /**
@@ -20,49 +25,64 @@ interface BuilderImagesPanelProps {
  */
 export function BuilderImagesPanel({
   onImageDragStart,
-  onDragEnd
+  onDragEnd,
+  bookSettings,
+  onBookSettingsUpdate
 }: BuilderImagesPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  
+  // Use book settings as the single source of truth for uploaded images
+  const uploadedImages = bookSettings.uploadedImages || [];
+  
+  // Helper function to update images in book settings
+  const updateUploadedImages = (newImages: string[]) => {
+    const updatedSettings = {
+      ...bookSettings,
+      uploadedImages: newImages
+    };
+    onBookSettingsUpdate(updatedSettings);
+  };
+
+
 
   /**
    * Handles file upload via input
    */
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
 
-    Array.from(files).forEach(file => {
+    for (const file of Array.from(files)) {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (e) => {
           const imageUrl = e.target?.result as string;
-          setUploadedImages(prev => [...prev, imageUrl]);
+          updateUploadedImages([...uploadedImages, imageUrl]);
         };
         reader.readAsDataURL(file);
       }
-    });
+    }
   };
 
   /**
    * Handles drag and drop upload
    */
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    files.forEach(file => {
+    for (const file of files) {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (e) => {
           const imageUrl = e.target?.result as string;
-          setUploadedImages(prev => [...prev, imageUrl]);
+          updateUploadedImages([...uploadedImages, imageUrl]);
         };
         reader.readAsDataURL(file);
       }
-    });
+    }
   };
 
   /**
@@ -92,7 +112,7 @@ export function BuilderImagesPanel({
    * Removes an uploaded image
    */
   const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    updateUploadedImages(uploadedImages.filter((_, i) => i !== index));
   };
 
   return (
@@ -183,11 +203,15 @@ export function BuilderImagesPanel({
                 onDragEnd={onDragEnd}
                 title="Drag to add to document"
               >
-                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-orange-400 transition-colors">
+                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-orange-400 transition-colors bg-gray-100">
                   <img
                     src={imageUrl}
-                    alt={`Uploaded ${index + 1}`}
+                    alt={`Uploaded image ${index + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
                   />
                 </div>
                 

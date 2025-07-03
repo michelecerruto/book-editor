@@ -216,7 +216,7 @@ export function useBuilderContent({
   /**
    * Updates an element's style property
    */
-    const updateElementStyle = useCallback((
+  const updateElementStyle = useCallback((
     property: string,
     value: string,
     elementId?: string

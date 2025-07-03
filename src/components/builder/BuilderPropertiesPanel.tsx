@@ -6,6 +6,7 @@ import React from 'react';
 import { Settings, AlignLeft, AlignCenter, AlignRight, Trash2, Bold, Italic, Underline } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+
 interface BuilderPropertiesPanelProps {
   /** Currently selected element */
   selectedElement: HTMLElement | null;
@@ -281,6 +282,8 @@ export function BuilderPropertiesPanel({
               />
             </div>
           )}
+
+
 
           {/* Font Size for Text Elements */}
           {!isImage && (

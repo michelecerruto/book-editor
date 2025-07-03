@@ -85,8 +85,6 @@ function processElementForBuilder(element: Element): void {
   Array.from(htmlElement.children).forEach(processElementForBuilder);
 }
 
-
-
 /**
  * Processes content to make it compatible with Builder
  * @param content - Raw HTML content
@@ -155,6 +153,159 @@ export function applySelectionStyling(element: HTMLElement): void {
   element.style.outline = '2px solid #f97316';
   element.style.outlineOffset = '2px';
   element.style.boxShadow = '0 0 0 4px rgba(249, 115, 22, 0.1)';
+  
+  // Add resize handles for images
+  const isImage = element.tagName === 'IMG' || element.querySelector('img') !== null;
+  if (isImage) {
+    addImageResizeHandles(element);
+  }
+}
+
+/**
+ * Adds resize handles to an image element
+ * @param element - Image element or figure containing image
+ */
+function addImageResizeHandles(element: HTMLElement): void {
+  // Remove any existing resize handles first
+  removeImageResizeHandles(element);
+  
+  // Ensure the element has relative positioning for absolute positioned handles
+  const originalPosition = element.style.position;
+  if (!originalPosition || originalPosition === 'static') {
+    element.style.position = 'relative';
+  }
+  
+  // Create resize handles
+  const handles = [
+    { position: 'nw', cursor: 'nw-resize', top: '-6px', left: '-6px' },
+    { position: 'ne', cursor: 'ne-resize', top: '-6px', right: '-6px' },
+    { position: 'sw', cursor: 'sw-resize', bottom: '-6px', left: '-6px' },
+    { position: 'se', cursor: 'se-resize', bottom: '-6px', right: '-6px' }
+  ];
+  
+  handles.forEach(handle => {
+    const handleElement = document.createElement('div');
+    handleElement.className = 'image-resize-handle';
+    handleElement.dataset.handle = handle.position;
+    
+    // Style the handle
+    handleElement.style.cssText = `
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background-color: #f97316;
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: ${handle.cursor};
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      pointer-events: auto;
+      ${handle.top ? `top: ${handle.top};` : ''}
+      ${handle.bottom ? `bottom: ${handle.bottom};` : ''}
+      ${handle.left ? `left: ${handle.left};` : ''}
+      ${handle.right ? `right: ${handle.right};` : ''}
+    `;
+    
+    // Add mouse down handler for resizing
+    handleElement.addEventListener('mousedown', (e) => {
+      handleImageResize(e, element, handle.position);
+    });
+    
+    element.appendChild(handleElement);
+  });
+}
+
+/**
+ * Removes resize handles from an image element
+ * @param element - Image element or figure containing image
+ */
+function removeImageResizeHandles(element: HTMLElement): void {
+  const handles = element.querySelectorAll('.image-resize-handle');
+  handles.forEach(handle => handle.remove());
+}
+
+/**
+ * Handles image resizing when dragging resize handles
+ * @param e - Mouse event
+ * @param element - Image element or figure containing image
+ * @param handle - Handle position being dragged
+ */
+function handleImageResize(e: MouseEvent, element: HTMLElement, handle: string): void {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const imgElement = element.tagName === 'IMG' ? element as HTMLImageElement : element.querySelector('img');
+  if (!imgElement) return;
+  
+  const startMousePos = { x: e.clientX, y: e.clientY };
+  const startSize = {
+    width: imgElement.offsetWidth,
+    height: imgElement.offsetHeight
+  };
+  
+  // Prevent text selection during drag
+  document.body.style.userSelect = 'none';
+  
+  const handleMouseMove = (moveEvent: MouseEvent) => {
+    const deltaX = moveEvent.clientX - startMousePos.x;
+    const deltaY = moveEvent.clientY - startMousePos.y;
+    
+    let newWidth = startSize.width;
+    let newHeight = startSize.height;
+    
+    // Calculate new dimensions based on which handle is being dragged
+    switch (handle) {
+      case 'se': // Southeast (bottom-right)
+        newWidth = startSize.width + deltaX;
+        newHeight = startSize.height + deltaY;
+        break;
+      case 'sw': // Southwest (bottom-left)
+        newWidth = startSize.width - deltaX;
+        newHeight = startSize.height + deltaY;
+        break;
+      case 'ne': // Northeast (top-right)
+        newWidth = startSize.width + deltaX;
+        newHeight = startSize.height - deltaY;
+        break;
+      case 'nw': // Northwest (top-left)
+        newWidth = startSize.width - deltaX;
+        newHeight = startSize.height - deltaY;
+        break;
+    }
+    
+    // Enforce minimum size
+    newWidth = Math.max(50, newWidth);
+    newHeight = Math.max(50, newHeight);
+    
+    // Apply the new size
+    imgElement.style.width = `${newWidth}px`;
+    imgElement.style.height = `${newHeight}px`;
+    imgElement.style.objectFit = 'cover';
+    
+    // If it's inside a figure, update the figure too
+    if (element.tagName === 'FIGURE') {
+      element.style.width = `${newWidth}px`;
+    }
+  };
+  
+  const handleMouseUp = () => {
+    // Restore text selection
+    document.body.style.userSelect = '';
+    
+    // Remove global listeners
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    // Trigger a custom event to notify that resizing is complete
+    const resizeEvent = new CustomEvent('imageResized', {
+      detail: { element, width: imgElement.offsetWidth, height: imgElement.offsetHeight }
+    });
+    element.dispatchEvent(resizeEvent);
+  };
+  
+  // Add global mouse listeners
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
 }
 
 /**
@@ -165,6 +316,12 @@ export function removeSelectionStyling(element: HTMLElement): void {
   element.style.outline = 'none';
   element.style.boxShadow = 'none';
   element.style.outlineOffset = '0px';
+  
+  // Remove resize handles for images
+  const isImage = element.tagName === 'IMG' || element.querySelector('img') !== null;
+  if (isImage) {
+    removeImageResizeHandles(element);
+  }
 }
 
 /**

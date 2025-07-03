@@ -28,6 +28,7 @@ export interface BookSettings {
   pageNumbers: PageNumberSettings;
   margins: MarginSettings;
   design: DesignSettings;
+  uploadedImages?: string[];
 }
 
 export interface PageNumberSettings {

@@ -341,9 +341,16 @@ export function Builder({
           bookSettings={bookSettings}
           designSettings={designSettings}
           currentPageNumber={currentPageIndex + 1}
+          selectedElement={selection.selectedElement}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={handleCanvasClick}
+          onContentUpdate={() => {
+            // Update content from DOM after image resize
+            if (contentRef.current) {
+              updateContent(contentRef.current.innerHTML);
+            }
+          }}
         />
       </div>
     </div>
